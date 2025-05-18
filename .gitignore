@@ -27,3 +27,8 @@ go.work.sum
 # IDE File
 .idea/
 .nvim/
+
+# Key File
+.git
+git_rsa
+git_rsa.pub
