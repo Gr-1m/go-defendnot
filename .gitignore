@@ -24,9 +24,11 @@ go.work.sum
 # env file
 .env
 
-# IDE File
+# IDE and Demo File
 .idea/
 .nvim/
+demo/
+demo-*/
 
 # Key File
 .git

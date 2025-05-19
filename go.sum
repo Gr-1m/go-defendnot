@@ -1,0 +1,4 @@
+github.com/Gr-1m/sys v0.0.0-20250518023238-2874f71402dd h1:MmHkLDg6ZKBbfvS0Ie14/2j0GgeKabe8/p6c/HF3rYE=
+github.com/Gr-1m/sys v0.0.0-20250518023238-2874f71402dd/go.mod h1:gFKUw9zlTKD9w7kq7h8xDhveX6PT5Eph6My78m9ffy4=
+golang.org/x/sys v0.33.0 h1:q3i8TbbEz+JRD9ywIRlyRAQbM0qF7hu24q3teo2hbuw=
+golang.org/x/sys v0.33.0/go.mod h1:BJP2sWEmIv4KK5OTEluFJCKSidICx8ciO85XgH3Ak8k=
